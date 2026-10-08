@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hadas Atias</title>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3f8;--fg:#211a27;--card:#fff;--acc:#7a2e5a;--accfg:#fff;--mut:#756d7d;--bd:#e3dce8;--soft:#ece4f0}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17121b;--fg:#f0eaf4;--card:#221b29;--acc:#d48ab8;--accfg:#1a0f17;--mut:#a79bb0;--bd:#372d40;--soft:#2c2335}}
-:root[data-theme="dark"]{--bg:#17121b;--fg:#f0eaf4;--card:#221b29;--acc:#d48ab8;--accfg:#1a0f17;--mut:#a79bb0;--bd:#372d40;--soft:#2c2335}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:Heebo,Arial,sans-serif;line-height:1.6}
 a{color:inherit;text-decoration:none}
@@ -50,137 +50,151 @@ td input{min-width:90px}
 #toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
 .badge{background:var(--acc);color:var(--accfg);border-radius:999px;padding:0 7px;font-size:12px;margin-inline-start:4px}
+.err{color:#c0392b;min-height:1.4em;margin:10px 0 0}
 </style>
 </head>
 <body>
-<header>
-  <a class="logo" href="#/">Hadas Atias</a>
-  <nav id="nav"></nav>
-</header>
-<main id="app"></main>
+<header><a class="logo" href="#/">Hadas Atias</a><nav id="nav"></nav></header>
+<main id="app"><p>טוען...</p></main>
 <div id="toast"></div>
 <script>
-const mem={};
-const L=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):(mem[k]??d)}catch(e){return mem[k]??d}};
-const S=(k,v)=>{mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const svg=(e,c)=>'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360"><rect width="300" height="360" fill="${c}"/><text x="150" y="215" font-size="120" text-anchor="middle">${e}</text></svg>`);
-const seedP=[["חולצת פשתן","👚","#e4d7ea",129],["שמלת מקסי","👗","#d8c1d6",289],["ג'ינס גבוה","👖","#c3cfe0",219],["מעיל צמר","🧥","#cfc4d6",459],["חצאית פליסה","👗","#dcd0e6",179],["סווטשירט","👕","#c9d9d2",149],["חולצת סטן","👚","#e8cfdc",169],["כובע קיץ","👒","#e2dccb",89]]
- .map((p,i)=>({id:i+1,name:p[0],price:p[3],img:svg(p[1],p[2]),imgs:[svg(p[1],p[2]),svg(p[1],'#d9d4df'),svg('🧵',p[2])],desc:p[0]+' מבית Hadas Atias: בד נעים למגע, גזרה נוחה ותפירה איכותית. מתאים ללבישה יומיומית.'}));
-let users=L('ha_users',null);
-if(!users){users=[
- {u:'admin1234',p:'1234qwer',email:'admin@hadasatias.com',role:'admin'},
- {u:'test1',p:'test1234',email:'test1@example.com',role:'customer'},
- {u:'test2',p:'test1234',email:'test2@example.com',role:'customer'},
- {u:'test3',p:'test1234',email:'test3@example.com',role:'customer'}];S('ha_users',users)}
-let products=L('ha_products',null);if(!products){products=seedP;S('ha_products',products)}
-products.forEach(p=>{if(!p.imgs){const q=seedP.find(x=>x.name===p.name);p.imgs=q?q.imgs:[p.img];p.desc=p.desc||(q?q.desc:'')}});S('ha_products',products);
-let settings=L('ha_set',{mgr:'',bit:''}),orders=L('ha_orders',[]);
-let carts=L('ha_carts',{});
-let sess=L('ha_sess',null);
-const me=()=>users.find(x=>x.u===sess);
-const toast=t=>{const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)};
+const SB_URL='https://bduwoywwzostwfsaphps.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkdXdveXd3em9zdHdmc2FwaHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0Nzg2MzAsImV4cCI6MjEwNzA1NDYzMH0.Y2z4W98TI-p_AgHiO6hpSong02_jN2rUA4BoInSVqFY';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:'pkce'}});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ils=n=>'₪'+Number(n).toLocaleString('he-IL');
-const cartOf=()=>carts[sess]||{};
-const cartCount=()=>Object.values(cartOf()).reduce((a,b)=>a+b,0);
-const val=id=>document.getElementById(id).value.trim();
-const go=h=>{location.hash=h};
-let pendingImgs=[];
+const val=id=>$(id).value.trim();
+const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)};
+const go=h=>location.hash===h?render():(location.hash=h);
+const svg=(e,c)=>'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360"><rect width="300" height="360" fill="${c}"/><text x="150" y="215" font-size="120" text-anchor="middle">${e}</text></svg>`);
+const imgs=q=>q.images&&q.images.length?q.images:[svg('👗','#e4d7ea')];
+const redir=()=>location.origin+location.pathname;
+let user=null,prof=null,products=[],cart=[],orders=[],settings={manager_phone:'',bit_link:''},ready=false,afterLogin=false,lastOrder=null,pendingFiles=[],pendingDel=null;
+const isAdmin=()=>prof&&prof.role==='admin';
+const cartCount=()=>cart.reduce((a,b)=>a+b.quantity,0);
+const qOf=id=>(cart.find(c=>c.product_id===id)||{quantity:0}).quantity;
+const cartInfo=()=>{const items=cart.map(c=>({p:products.find(x=>x.id===c.product_id),q:c.quantity})).filter(x=>x.p);return{items,tot:items.reduce((a,x)=>a+Number(x.p.price)*x.q,0)}};
 
-function addCart(id){
-  if(!me()){toast('צריך להתחבר כדי להוסיף לעגלה');go('#/login');return}
-  const c=cartOf();c[id]=(c[id]||0)+1;carts[sess]=c;S('ha_carts',carts);toast('נוסף לעגלה');nav()}
-function qty(id,d){const c=cartOf();c[id]=(c[id]||0)+d;if(c[id]<=0)delete c[id];carts[sess]=c;S('ha_carts',carts);render()}
-const cartInfo=()=>{const c=cartOf(),items=Object.keys(c).map(id=>({p:products.find(x=>x.id==id),q:c[id]})).filter(x=>x.p);return{items,tot:items.reduce((a,x)=>a+x.p.price*x.q,0)}};
+async function reloadCart(){cart=user?((await sb.from('cart_items').select('product_id,quantity').order('product_id')).data||[]):[]}
+async function loadAll(){
+  try{
+    const [p,s]=await Promise.all([sb.from('products').select('*').order('id'),sb.from('settings').select('*').eq('id',1).maybeSingle()]);
+    if(p.error)throw p.error;products=p.data||[];if(s.data)settings=s.data;
+    prof=null;orders=[];cart=[];
+    if(user){
+      prof=(await sb.from('profiles').select('*').eq('id',user.id).maybeSingle()).data;
+      await reloadCart();
+      if(isAdmin())orders=(await sb.from('orders').select('*,order_items(*)').order('id',{ascending:false})).data||[];
+    }
+  }catch(e){toast('שגיאה בטעינת הנתונים: '+(e.message||e))}
+}
+sb.auth.onAuthStateChange((ev,s)=>{setTimeout(async()=>{
+  const uid=s&&s.user?s.user.id:null;
+  if(ev==='SIGNED_IN'&&ready&&!afterLogin&&uid===(user&&user.id))return;
+  user=s?s.user:null;await loadAll();ready=true;
+  if(ev==='PASSWORD_RECOVERY')return go('#/reset');
+  if(afterLogin&&user){afterLogin=false;return go(isAdmin()?'#/admin':'#/shop')}
+  render()},0)});
+
+const run=async f=>{try{await f();await loadAll();render()}catch(e){toast('שגיאה: '+(e.message||e))}};
+async function setQty(id,n){const r=n<=0?await sb.from('cart_items').delete().eq('product_id',id):await sb.from('cart_items').upsert({user_id:user.id,product_id:id,quantity:n},{onConflict:'user_id,product_id'});if(r.error)throw r.error}
+async function addCart(id){if(!user){toast('צריך להתחבר כדי להוסיף לעגלה');return go('#/login')}
+  try{await setQty(id,qOf(id)+1);await reloadCart();nav();toast('נוסף לעגלה')}catch(e){toast('שגיאה: '+e.message)}}
+function qty(id,d){run(()=>setQty(id,qOf(id)+d))}
+
+async function login(e){e.preventDefault();const er=$('err');er.textContent='';const u=val('lu');let em=u;
+  if(!u.includes('@')){em=(await sb.rpc('email_for_username',{p_username:u})).data}
+  if(!em)return er.textContent='שם משתמש או סיסמה שגויים';
+  afterLogin=true;
+  const{error}=await sb.auth.signInWithPassword({email:em,password:$('lp').value});
+  if(error){afterLogin=false;er.textContent=/confirm/i.test(error.message)?'יש לאשר את האימייל לפני ההתחברות':'שם משתמש או סיסמה שגויים'}else toast('התחברת בהצלחה')}
+async function logout(){await sb.auth.signOut();toast('התנתקת');go('#/')}
+async function register(e){e.preventDefault();const er=$('err'),n=val('rn'),u=val('ru'),em=val('re'),p=$('rp').value;
+  if(n.split(/\s+/).filter(Boolean).length<2)return er.textContent='נא למלא שם מלא: שם פרטי ושם משפחה';
+  if(u.length<3)return er.textContent='שם משתמש חייב להכיל 3 תווים לפחות';
+  if(!/^\S+@\S+\.\S+$/.test(em))return er.textContent='כתובת אימייל לא תקינה';
+  if(p.length<6)return er.textContent='הסיסמה חייבת להכיל 6 תווים לפחות';
+  if((await sb.rpc('email_for_username',{p_username:u})).data)return er.textContent='שם המשתמש תפוס';
+  const{data,error}=await sb.auth.signUp({email:em,password:p,options:{data:{username:u,full_name:n},emailRedirectTo:redir()}});
+  if(error)return er.textContent=/registered/i.test(error.message)?'האימייל כבר רשום':'שגיאה בהרשמה: '+error.message;
+  if(!data.session){toast('נשלח מייל אישור. אשרו אותו ואז התחברו');return go('#/login')}
+  afterLogin=true;toast('נרשמת בהצלחה')}
+async function forgot(e){e.preventDefault();const u=val('fu');let em=u;
+  if(!u.includes('@')){em=(await sb.rpc('email_for_username',{p_username:u})).data}
+  if(em)await sb.auth.resetPasswordForEmail(em,{redirectTo:redir()});
+  const er=$('err');er.style.color='inherit';er.textContent='אם החשבון קיים, נשלח אליו מייל לאיפוס סיסמה.'}
+async function doReset(e){e.preventDefault();const p=$('np').value,er=$('err');
+  if(p.length<6)return er.textContent='הסיסמה חייבת להכיל 6 תווים לפחות';
+  const{error}=await sb.auth.updateUser({password:p});if(error)return er.textContent=error.message;toast('הסיסמה עודכנה');go('#/shop')}
+
+const orderMsg=o=>`הזמנה חדשה מ-Hadas Atias\nשם: ${o.customer_name}\nמוצרים: ${o.order_items.map(i=>i.product_name+' x'+i.quantity).join(', ')}\nסה"כ לתשלום: ${ils(o.total)}\nאימייל: ${o.email}\nטלפון: ${o.phone}\nכתובת למשלוח: ${o.address}`;
 const normPhone=s=>{let d=String(s).replace(/\D/g,'');if(d.startsWith('0'))d='972'+d.slice(1);return d};
-const orderMsg=o=>`הזמנה חדשה מ-Hadas Atias\nשם: ${o.name}\nמוצרים: ${o.items.map(i=>i.n+' x'+i.q).join(', ')}\nסה"כ לתשלום: ${ils(o.total)}\nאימייל: ${o.email}\nטלפון: ${o.phone}\nכתובת למשלוח: ${o.address}`;
-const waLink=o=>'https://wa.me/'+normPhone(settings.mgr)+'?text='+encodeURIComponent(orderMsg(o));
-function payBit(t){try{navigator.clipboard.writeText(String(t))}catch(e){}toast('הסכום '+ils(t)+' הועתק. מעבירים לביט');window.open(settings.bit||'https://www.bitpay.co.il','_blank','noopener')}
-function saveSet(){settings={mgr:val('smgr'),bit:val('sbit')};S('ha_set',settings);toast('ההגדרות נשמרו')}
-function placeOrder(e){e.preventDefault();const er=document.getElementById('err'),n=val('cn'),ph=val('cp').replace(/[\s-]/g,''),ad=val('ca');
+const waLink=o=>'https://wa.me/'+normPhone(settings.manager_phone)+'?text='+encodeURIComponent(orderMsg(o));
+function payBit(t){try{navigator.clipboard.writeText(String(t))}catch(e){}toast('הסכום '+ils(t)+' הועתק. מעבירים לביט');window.open(settings.bit_link||'https://www.bitpay.co.il','_blank','noopener')}
+async function placeOrder(e){e.preventDefault();const er=$('err'),n=val('cn'),ph=val('cp').replace(/[\s-]/g,''),ad=val('ca');
   if(n.length<2)return er.textContent='נא למלא שם מלא';
   if(!/^05\d{8}$/.test(ph))return er.textContent='נא להזין נייד תקין, לדוגמה 0501234567';
   if(ad.length<8)return er.textContent='נא למלא כתובת מלאה: רחוב, מספר ועיר';
-  const {items,tot}=cartInfo();if(!items.length)return er.textContent='העגלה ריקה';
-  const o={id:Date.now(),date:new Date().toLocaleString('he-IL'),user:sess,name:n,phone:ph,address:ad,email:me().email,items:items.map(x=>({n:x.p.name,q:x.q,pr:x.p.price})),total:tot};
-  orders.unshift(o);S('ha_orders',orders);carts[sess]={};S('ha_carts',carts);go('#/done/'+o.id)}
-function login(e){e.preventDefault();
-  const u=users.find(x=>x.u===val('lu')&&x.p===document.getElementById('lp').value);
-  if(!u){document.getElementById('err').textContent='שם משתמש או סיסמה שגויים';return}
-  sess=u.u;S('ha_sess',sess);toast('שלום '+(u.name||u.u));go(u.role==='admin'?'#/admin':'#/shop')}
-function logout(){sess=null;S('ha_sess',null);toast('התנתקת');go('#/')}
-function register(e){e.preventDefault();
-  const u=val('ru'),em=val('re'),p=document.getElementById('rp').value,er=document.getElementById('err');
-  if(val('rn').split(/\s+/).filter(Boolean).length<2)return er.textContent='נא למלא שם מלא: שם פרטי ושם משפחה';
-  if(u.length<3)return er.textContent='שם משתמש חייב להכיל 3 תווים לפחות';
-  if(users.some(x=>x.u.toLowerCase()===u.toLowerCase()))return er.textContent='שם המשתמש תפוס';
-  if(!/^\S+@\S+\.\S+$/.test(em))return er.textContent='כתובת אימייל לא תקינה';
-  if(p.length<4)return er.textContent='הסיסמה חייבת להכיל 4 תווים לפחות';
-  users.push({u,p,email:em,name:val('rn'),role:'customer'});S('ha_users',users);sess=u;S('ha_sess',sess);toast('נרשמת בהצלחה');go('#/shop')}
-function forgot(e){e.preventDefault();
-  const x=users.find(x=>x.u===val('fu')&&x.email.toLowerCase()===val('fe').toLowerCase()),p=document.getElementById('fp').value;
-  const er=document.getElementById('err');
-  if(!x)return er.textContent='שם המשתמש והאימייל לא תואמים';
-  if(p.length<4)return er.textContent='הסיסמה החדשה חייבת להכיל 4 תווים לפחות';
-  x.p=p;S('ha_users',users);toast('הסיסמה עודכנה, אפשר להתחבר');go('#/login')}
-function resize(file,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,500/i.width),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.8))};i.src=r.result};r.readAsDataURL(file)}
-const rs=f=>new Promise(r=>resize(f,r));
-const rd=inp=>Promise.all([...inp.files].map(rs));
-function newImg(inp){rd(inp).then(a=>{pendingImgs=a;toast(a.length+' תמונות נבחרו')})}
-function rowImg(id,inp){rd(inp).then(a=>{if(!a.length)return;const q=products.find(x=>x.id===id);q.imgs=a;q.img=a[0];S('ha_products',products);render();toast('התמונות עודכנו')})}
-function addProd(e){e.preventDefault();const n=val('pn'),pr=+val('pp');
-  if(!n||!(pr>0))return toast('מלאו שם ומחיר תקינים');
-  const im=pendingImgs.length?pendingImgs:[svg('👗','#e4d7ea')];
-  products.push({id:Date.now(),name:n,price:pr,desc:val('pd'),img:im[0],imgs:im});pendingImgs=[];S('ha_products',products);toast('הפריט נוסף');render()}
-function saveRow(id){const q=products.find(x=>x.id===id),n=val('n'+id),pr=+val('p'+id);
-  if(!n||!(pr>0))return toast('שם או מחיר לא תקינים');q.name=n;q.price=pr;q.desc=val('d'+id);S('ha_products',products);toast('נשמר')}
-function adminHtml(){return `<h2>ניהול החנות</h2>
-<div class="panel"><b>הגדרות הזמנות</b><div class="row"><div style="flex:1;min-width:200px"><label>נייד המנהל לקבלת הודעות הזמנה</label><input id="smgr" value="${esc(settings.mgr)}" placeholder="0501234567"></div><div style="flex:1;min-width:200px"><label>קישור תשלום ביט (אופציונלי)</label><input id="sbit" value="${esc(settings.bit)}" placeholder="https://..."></div><button class="btn" onclick="saveSet()">שמירה</button></div></div>
-<form class="panel" onsubmit="addProd(event)"><b>הוספת פריט</b><div class="row"><input id="pn" placeholder="שם הפריט" style="flex:2;min-width:140px"><input id="pp" type="number" min="1" placeholder="מחיר" style="flex:1;min-width:90px"><input id="pd" placeholder="תיאור" style="flex:3;min-width:180px"><input type="file" accept="image/*" multiple onchange="newImg(this)" style="flex:2;min-width:160px"><button class="btn">הוספה</button></div></form>
-<div class="panel scroll"><table><tr><th></th><th>שם</th><th>מחיר ₪</th><th>תיאור</th><th>החלפת תמונות (אפשר כמה)</th><th></th></tr>${products.map(q=>`<tr><td><img src="${esc(q.img)}" alt=""></td><td><input id="n${q.id}" value="${esc(q.name)}"></td><td><input id="p${q.id}" type="number" min="1" value="${q.price}"></td><td><input id="d${q.id}" value="${esc(q.desc||'')}" style="min-width:200px"></td><td><input type="file" accept="image/*" multiple onchange="rowImg(${q.id},this)"></td><td><div class="row"><button class="btn sm" onclick="saveRow(${q.id})">שמירה</button><button class="btn ghost sm" onclick="delProd(${q.id})">${pendingDel===q.id?'לחצו לאישור מחיקה':'מחיקה'}</button></div></td></tr>`).join('')}</table></div>
-<h2>הזמנות</h2>${orders.length?`<div class="panel scroll"><table><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סה״כ</th></tr>${orders.map(o=>`<tr><td>${esc(o.date)}</td><td>${esc(o.name)}<br>${esc(o.phone)}<br>${esc(o.email)}<br>${esc(o.address)}</td><td>${o.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</td><td>${ils(o.total)}</td></tr>`).join('')}</table></div>`:'<p>אין הזמנות עדיין.</p>'}`}
-let pendingDel=null;
+  const{data,error}=await sb.rpc('place_order',{p_name:n,p_phone:ph,p_address:ad});
+  if(error)return er.textContent='שגיאה ביצירת ההזמנה: '+error.message;
+  await reloadCart();go('#/done/'+data)}
+
+const rsz=f=>new Promise(res=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,900/i.width),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.82)};i.src=r.result};r.readAsDataURL(f)});
+async function upload(files){const urls=[];for(const f of files){const b=await rsz(f),n=Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+  const{error}=await sb.storage.from('product-images').upload(n,b,{contentType:'image/jpeg'});if(error)throw error;
+  urls.push(sb.storage.from('product-images').getPublicUrl(n).data.publicUrl)}return urls}
+function newImg(inp){pendingFiles=[...inp.files];toast(pendingFiles.length+' תמונות נבחרו')}
+function addProd(e){e.preventDefault();const n=val('pn'),pr=+val('pp');if(!n||!(pr>0))return toast('מלאו שם ומחיר תקינים');
+  run(async()=>{const im=pendingFiles.length?await upload(pendingFiles):[];const{error}=await sb.from('products').insert({name:n,price:pr,description:val('pd'),images:im});if(error)throw error;pendingFiles=[];toast('הפריט נוסף')})}
+function saveRow(id){const n=val('n'+id),pr=+val('p'+id);if(!n||!(pr>0))return toast('שם או מחיר לא תקינים');
+  run(async()=>{const{error}=await sb.from('products').update({name:n,price:pr,description:val('d'+id)}).eq('id',id);if(error)throw error;toast('נשמר')})}
+function rowImg(id,inp){const f=[...inp.files];if(!f.length)return;
+  run(async()=>{const im=await upload(f);const{error}=await sb.from('products').update({images:im}).eq('id',id);if(error)throw error;toast('התמונות עודכנו')})}
 function delProd(id){
   if(pendingDel!==id){pendingDel=id;render();toast('לחצו שוב כדי לאשר מחיקה');setTimeout(()=>{if(pendingDel===id){pendingDel=null;if(location.hash==='#/admin')render()}},4000);return}
-  pendingDel=null;products=products.filter(p=>p.id!==id);S('ha_products',products);render();toast('הפריט נמחק')}
+  pendingDel=null;run(async()=>{const{error}=await sb.from('products').delete().eq('id',id);if(error)throw error;toast('הפריט נמחק')})}
+function saveSet(){run(async()=>{const{error}=await sb.from('settings').update({manager_phone:val('smgr'),bit_link:val('sbit')}).eq('id',1);if(error)throw error;toast('ההגדרות נשמרו')})}
 
-const pcard=p=>`<div class="card"><a href="#/product/${p.id}"><img src="${esc(p.img)}" alt="${esc(p.name)}"></a><div class="b"><a href="#/product/${p.id}">${esc(p.name)}</a><div class="price">${ils(p.price)}</div><button class="btn sm" onclick="addCart(${p.id})">הוספה לעגלה</button></div></div>`;
-const authBox=(t,f,body,foot)=>`<form class="box" onsubmit="${f}(event)"><h2 style="margin:0">${t}</h2>${body}<p id="err" style="color:#c0392b;min-height:1.4em;margin:10px 0 0"></p><button class="btn" style="width:100%">${t}</button><p style="margin:14px 0 0;font-size:14px">${foot}</p></form>`;
+const pcard=p=>`<div class="card"><a href="#/product/${p.id}"><img src="${esc(imgs(p)[0])}" alt="${esc(p.name)}"></a><div class="b"><a href="#/product/${p.id}">${esc(p.name)}</a><div class="price">${ils(p.price)}</div><button class="btn sm" onclick="addCart(${p.id})">הוספה לעגלה</button></div></div>`;
+const authBox=(t,f,body,foot)=>`<form class="box" onsubmit="${f}(event)"><h2 style="margin:0">${t}</h2>${body}<p id="err" class="err"></p><button class="btn" style="width:100%">${t}</button><p style="margin:14px 0 0;font-size:14px">${foot}</p></form>`;
+function adminHtml(){return `<h2>ניהול החנות</h2>
+<div class="panel"><b>הגדרות הזמנות</b><div class="row"><div style="flex:1;min-width:200px"><label>נייד המנהל לקבלת הודעות הזמנה</label><input id="smgr" value="${esc(settings.manager_phone)}" placeholder="0501234567"></div><div style="flex:1;min-width:200px"><label>קישור תשלום ביט (אופציונלי)</label><input id="sbit" value="${esc(settings.bit_link)}" placeholder="https://..."></div><button class="btn" onclick="saveSet()">שמירה</button></div></div>
+<form class="panel" onsubmit="addProd(event)"><b>הוספת פריט</b><div class="row"><input id="pn" placeholder="שם הפריט" style="flex:2;min-width:140px"><input id="pp" type="number" min="1" placeholder="מחיר" style="flex:1;min-width:90px"><input id="pd" placeholder="תיאור" style="flex:3;min-width:180px"><input type="file" accept="image/*" multiple onchange="newImg(this)" style="flex:2;min-width:160px"><button class="btn">הוספה</button></div></form>
+<div class="panel scroll"><table><tr><th></th><th>שם</th><th>מחיר ₪</th><th>תיאור</th><th>החלפת תמונות (אפשר כמה)</th><th></th></tr>${products.map(q=>`<tr><td><img src="${esc(imgs(q)[0])}" alt=""></td><td><input id="n${q.id}" value="${esc(q.name)}"></td><td><input id="p${q.id}" type="number" min="1" value="${q.price}"></td><td><input id="d${q.id}" value="${esc(q.description||'')}" style="min-width:200px"></td><td><input type="file" accept="image/*" multiple onchange="rowImg(${q.id},this)"></td><td><div class="row"><button class="btn sm" onclick="saveRow(${q.id})">שמירה</button><button class="btn ghost sm" onclick="delProd(${q.id})">${pendingDel===q.id?'לחצו לאישור מחיקה':'מחיקה'}</button></div></td></tr>`).join('')}</table></div>
+<h2>הזמנות</h2>${orders.length?`<div class="panel scroll"><table><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סה״כ</th></tr>${orders.map(o=>`<tr><td>${esc(new Date(o.created_at).toLocaleString('he-IL'))}</td><td>${esc(o.customer_name)}<br>${esc(o.phone)}<br>${esc(o.email)}<br>${esc(o.address)}</td><td>${o.order_items.map(i=>esc(i.product_name)+' ×'+i.quantity).join('<br>')}</td><td>${ils(o.total)}</td></tr>`).join('')}</table></div>`:'<p>אין הזמנות עדיין.</p>'}`}
 
-function nav(){const u=me(),h=location.hash||'#/',a=x=>h===x?' class="on"':'';
-  document.getElementById('nav').innerHTML=`<a href="#/"${a('#/')}>בית</a><a href="#/shop"${a('#/shop')}>חנות</a>`+
-   (u&&u.role==='admin'?`<a href="#/admin"${a('#/admin')}>ניהול</a>`:'')+
-   `<a href="#/cart"${a('#/cart')}>עגלה${cartCount()?`<span class="badge">${cartCount()}</span>`:''}</a>`+
-   (u?`<span style="color:var(--mut)">${esc(u.name||u.u)}</span><button class="btn ghost sm" onclick="logout()">התנתקות</button>`:`<a href="#/login"${a('#/login')}>התחברות</a><a class="btn sm" href="#/register">הרשמה</a>`)}
+function nav(){const h=location.hash||'#/',a=x=>h===x?' class="on"':'';
+  $('nav').innerHTML=`<a href="#/"${a('#/')}>בית</a><a href="#/shop"${a('#/shop')}>חנות</a>`+(isAdmin()?`<a href="#/admin"${a('#/admin')}>ניהול</a>`:'')+
+  `<a href="#/cart"${a('#/cart')}>עגלה${cartCount()?`<span class="badge">${cartCount()}</span>`:''}</a>`+
+  (user?`<span style="color:var(--mut)">${esc(prof?(prof.full_name||prof.username):'')}</span><button class="btn ghost sm" onclick="logout()">התנתקות</button>`:`<a href="#/login"${a('#/login')}>התחברות</a><a class="btn sm" href="#/register">הרשמה</a>`)}
 
-function render(){
-  nav();const h=(location.hash||'#/').slice(1),u=me(),app=document.getElementById('app');let o='';window.scrollTo(0,0);
+async function render(){
+  nav();const app=$('app');if(!ready){app.innerHTML='<p>טוען...</p>';return}
+  const h=(location.hash||'#/').slice(1);let o='';
   if(h==='/'){o=`<section class="hero"><h1>Hadas Atias</h1><p>בגדים שנוחים ללבוש ויפים להסתכל עליהם. הקולקציה החדשה כבר בחנות.</p><a class="btn" href="#/shop">לחנות</a></section><h2>חדש בחנות</h2><div class="grid">${products.slice(0,4).map(pcard).join('')}</div>`}
   else if(h==='/shop'){o=`<h2>החנות</h2>${products.length?`<div class="grid">${products.map(pcard).join('')}</div>`:'<p>אין עדיין פריטים בחנות.</p>'}`}
-  else if(h==='/cart'){
-    if(!u)o=`<h2>עגלת קניות</h2><p>התחברו כדי לראות את העגלה.</p><a class="btn" href="#/login">התחברות</a>`;
-    else{const c=cartOf(),items=Object.keys(c).map(id=>({p:products.find(x=>x.id==id),q:c[id]})).filter(x=>x.p),tot=items.reduce((s,x)=>s+x.p.price*x.q,0);
-      o=`<h2>עגלת קניות</h2>`+(items.length?`<div class="panel scroll"><table>${items.map(x=>`<tr><td><img src="${esc(x.p.img)}" alt=""></td><td>${esc(x.p.name)}</td><td><div class="row"><button class="btn ghost sm" onclick="qty(${x.p.id},-1)">−</button>${x.q}<button class="btn ghost sm" onclick="qty(${x.p.id},1)">+</button></div></td><td>${ils(x.p.price*x.q)}</td></tr>`).join('')}</table><p style="font-size:20px"><b>סה״כ: ${ils(tot)}</b></p><button class="btn" onclick="go('#/checkout')">להמשך להזמנה</button></div>`:`<p>העגלה ריקה. <a href="#/shop" style="text-decoration:underline">לחנות</a></p>`)}}
   else if(h.startsWith('/product/')){const q=products.find(x=>x.id==h.split('/')[2]);
     if(!q)o='<h2>הפריט לא נמצא</h2><a class="btn" href="#/shop">לחנות</a>';
-    else{const im=q.imgs&&q.imgs.length?q.imgs:[q.img];
-      o=`<a href="#/shop" style="color:var(--mut)">חזרה לחנות</a><div class="pdp"><div><img id="big" class="big" src="${esc(im[0])}" alt="${esc(q.name)}"><div class="thumbs">${im.map(x=>`<img src="${esc(x)}" alt="" onclick="document.getElementById('big').src=this.src">`).join('')}</div></div><div><h1 style="margin:0 0 6px">${esc(q.name)}</h1><div class="price" style="font-size:24px">${ils(q.price)}</div><p style="color:var(--mut);max-width:50ch">${esc(q.desc||'')}</p><button class="btn" onclick="addCart(${q.id})">הוספה לעגלה</button></div></div>`}}
+    else{const im=imgs(q);o=`<a href="#/shop" style="color:var(--mut)">חזרה לחנות</a><div class="pdp"><div><img id="big" class="big" src="${esc(im[0])}" alt="${esc(q.name)}"><div class="thumbs">${im.map(x=>`<img src="${esc(x)}" alt="" onclick="$('big').src=this.src">`).join('')}</div></div><div><h1 style="margin:0 0 6px">${esc(q.name)}</h1><div class="price" style="font-size:24px">${ils(q.price)}</div><p style="color:var(--mut);max-width:50ch">${esc(q.description||'')}</p><button class="btn" onclick="addCart(${q.id})">הוספה לעגלה</button></div></div>`}}
+  else if(h==='/cart'){
+    if(!user)o=`<h2>עגלת קניות</h2><p>התחברו כדי לראות את העגלה.</p><a class="btn" href="#/login">התחברות</a>`;
+    else{const{items,tot}=cartInfo();o=`<h2>עגלת קניות</h2>`+(items.length?`<div class="panel scroll"><table>${items.map(x=>`<tr><td><img src="${esc(imgs(x.p)[0])}" alt=""></td><td>${esc(x.p.name)}</td><td><div class="row"><button class="btn ghost sm" onclick="qty(${x.p.id},-1)">−</button>${x.q}<button class="btn ghost sm" onclick="qty(${x.p.id},1)">+</button></div></td><td>${ils(x.p.price*x.q)}</td></tr>`).join('')}</table><p style="font-size:20px"><b>סה״כ: ${ils(tot)}</b></p><button class="btn" onclick="go('#/checkout')">להמשך להזמנה</button></div>`:`<p>העגלה ריקה. <a href="#/shop" style="text-decoration:underline">לחנות</a></p>`)}}
   else if(h==='/checkout'){
-    if(!u)o=`<h2>פרטי משלוח</h2><p>התחברו כדי להזמין.</p><a class="btn" href="#/login">התחברות</a>`;
-    else{const {items,tot}=cartInfo();
-      o=items.length?`<h2>פרטי משלוח</h2><form class="box" onsubmit="placeOrder(event)"><label>שם מלא</label><input id="cn" autocomplete="name" value="${esc(u.name||'')}"><label>טלפון נייד</label><input id="cp" type="tel" placeholder="0501234567" autocomplete="tel"><label>כתובת למשלוח</label><input id="ca" placeholder="רחוב, מספר ועיר" autocomplete="street-address"><p style="font-size:18px"><b>סה״כ: ${ils(tot)}</b></p><p id="err" style="color:#c0392b;min-height:1.4em;margin:0 0 8px"></p><button class="btn" style="width:100%">אישור הזמנה</button></form>`:`<h2>פרטי משלוח</h2><p>העגלה ריקה.</p><a class="btn" href="#/shop">לחנות</a>`}}
-  else if(h.startsWith('/done/')){const d=orders.find(x=>x.id==h.split('/')[2]);
-    if(!d)o='<h2>ההזמנה לא נמצאה</h2><a class="btn" href="#/">לדף הבית</a>';
-    else o=`<h2>תודה ${esc(d.name)}, ההזמנה התקבלה</h2><div class="panel"><p>${d.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</p><p>משלוח אל: ${esc(d.address)}<br>טלפון: ${esc(d.phone)}</p><p style="font-size:22px"><b>לתשלום: ${ils(d.total)}</b></p><div class="row"><button class="btn" onclick="payBit(${d.total})">תשלום בביט</button>${settings.mgr?`<a class="btn ghost" href="${esc(waLink(d))}" target="_blank" rel="noopener">שליחת פרטי ההזמנה לחנות בוואטסאפ</a>`:''}</div><p class="note">לחיצה על "תשלום בביט" מעתיקה את הסכום ופותחת את ביט. הזינו שם את הסכום.</p></div>`}
-  else if(h==='/login'){o=authBox('התחברות','login',`<label>שם משתמש</label><input id="lu" autocomplete="username"><label>סיסמה</label><input id="lp" type="password" autocomplete="current-password">`,`<a href="#/forgot" style="text-decoration:underline">שכחתי סיסמה</a> · <a href="#/register" style="text-decoration:underline">אין לי חשבון</a>`)+`<p class="note" style="max-width:420px;margin:auto">משתמשי בדיקה: test1 / test2 / test3, סיסמה: test1234</p>`}
-  else if(h==='/register'){o=authBox('הרשמה','register',`<label>שם מלא</label><input id="rn" autocomplete="name"><label>שם משתמש</label><input id="ru" autocomplete="username"><label>אימייל</label><input id="re" type="email"><label>סיסמה</label><input id="rp" type="password" autocomplete="new-password">`,`יש לך חשבון? <a href="#/login" style="text-decoration:underline">להתחברות</a>`)}
-  else if(h==='/forgot'){o=authBox('איפוס סיסמה','forgot',`<label>שם משתמש</label><input id="fu"><label>האימייל שנרשם</label><input id="fe" type="email"><label>סיסמה חדשה</label><input id="fp" type="password">`,`<a href="#/login" style="text-decoration:underline">חזרה להתחברות</a>`)}
-  else if(h==='/admin'){
-    if(!u||u.role!=='admin')o=`<h2>ניהול</h2><p>הדף הזה למנהלים בלבד.</p><a class="btn" href="#/login">התחברות כמנהל</a>`;
-    else o=adminHtml()}
+    if(!user)o=`<h2>פרטי משלוח</h2><p>התחברו כדי להזמין.</p><a class="btn" href="#/login">התחברות</a>`;
+    else{const{items,tot}=cartInfo();o=items.length?`<h2>פרטי משלוח</h2><form class="box" onsubmit="placeOrder(event)"><label>שם מלא</label><input id="cn" autocomplete="name" value="${esc(prof&&prof.full_name||'')}"><label>טלפון נייד</label><input id="cp" type="tel" placeholder="0501234567" autocomplete="tel"><label>כתובת למשלוח</label><input id="ca" placeholder="רחוב, מספר ועיר" autocomplete="street-address"><p style="font-size:18px"><b>סה״כ: ${ils(tot)}</b></p><p id="err" class="err"></p><button class="btn" style="width:100%">אישור הזמנה</button></form>`:`<h2>פרטי משלוח</h2><p>העגלה ריקה.</p><a class="btn" href="#/shop">לחנות</a>`}}
+  else if(h.startsWith('/done/')){const id=h.split('/')[2];
+    if(!user)o='<h2>התחברו כדי לראות את ההזמנה</h2><a class="btn" href="#/login">התחברות</a>';
+    else{if(!lastOrder||String(lastOrder.id)!==id)lastOrder=(await sb.from('orders').select('*,order_items(*)').eq('id',id).maybeSingle()).data;const d=lastOrder;
+      o=!d?'<h2>ההזמנה לא נמצאה</h2><a class="btn" href="#/">לדף הבית</a>':`<h2>תודה ${esc(d.customer_name)}, ההזמנה התקבלה</h2><div class="panel"><p>${d.order_items.map(i=>esc(i.product_name)+' ×'+i.quantity).join('<br>')}</p><p>משלוח אל: ${esc(d.address)}<br>טלפון: ${esc(d.phone)}</p><p style="font-size:22px"><b>לתשלום: ${ils(d.total)}</b></p><div class="row"><button class="btn" onclick="payBit(${Number(d.total)})">תשלום בביט</button>${settings.manager_phone?`<a class="btn ghost" href="${esc(waLink(d))}" target="_blank" rel="noopener">שליחת פרטי ההזמנה לחנות בוואטסאפ</a>`:''}</div><p class="note">לחיצה על "תשלום בביט" מעתיקה את הסכום ופותחת את ביט. הזינו שם את הסכום.</p></div>`}}
+  else if(h==='/login'){o=authBox('התחברות','login',`<label>שם משתמש או אימייל</label><input id="lu" autocomplete="username"><label>סיסמה</label><input id="lp" type="password" autocomplete="current-password">`,`<a href="#/forgot" style="text-decoration:underline">שכחתי סיסמה</a> · <a href="#/register" style="text-decoration:underline">אין לי חשבון</a>`)}
+  else if(h==='/register'){o=authBox('הרשמה','register',`<label>שם מלא</label><input id="rn" autocomplete="name"><label>שם משתמש</label><input id="ru" autocomplete="username"><label>אימייל</label><input id="re" type="email"><label>סיסמה (6 תווים לפחות)</label><input id="rp" type="password" autocomplete="new-password">`,`יש לך חשבון? <a href="#/login" style="text-decoration:underline">להתחברות</a>`)}
+  else if(h==='/forgot'){o=authBox('איפוס סיסמה','forgot',`<label>שם משתמש או אימייל</label><input id="fu">`,`<a href="#/login" style="text-decoration:underline">חזרה להתחברות</a>`)}
+  else if(h==='/reset'){o=user?authBox('סיסמה חדשה','doReset',`<label>סיסמה חדשה</label><input id="np" type="password" autocomplete="new-password">`,''):'<p>הקישור לאיפוס אינו תקף. נסו לבקש איפוס מחדש.</p>'}
+  else if(h==='/admin'){o=isAdmin()?adminHtml():`<h2>ניהול</h2><p>הדף הזה למנהלים בלבד.</p><a class="btn" href="#/login">התחברות כמנהל</a>`}
   else o='<h2>העמוד לא נמצא</h2><a class="btn" href="#/">לדף הבית</a>';
   app.innerHTML=o}
-window.addEventListener('hashchange',render);render();
+window.addEventListener('hashchange',()=>{scrollTo(0,0);render()});
 </script>
 </body>
 </html>
