@@ -107,15 +107,16 @@ function placeOrder(e){e.preventDefault();const er=document.getElementById('err'
 function login(e){e.preventDefault();
   const u=users.find(x=>x.u===val('lu')&&x.p===document.getElementById('lp').value);
   if(!u){document.getElementById('err').textContent='שם משתמש או סיסמה שגויים';return}
-  sess=u.u;S('ha_sess',sess);toast('שלום '+u.u);go(u.role==='admin'?'#/admin':'#/shop')}
+  sess=u.u;S('ha_sess',sess);toast('שלום '+(u.name||u.u));go(u.role==='admin'?'#/admin':'#/shop')}
 function logout(){sess=null;S('ha_sess',null);toast('התנתקת');go('#/')}
 function register(e){e.preventDefault();
   const u=val('ru'),em=val('re'),p=document.getElementById('rp').value,er=document.getElementById('err');
+  if(val('rn').split(/\s+/).filter(Boolean).length<2)return er.textContent='נא למלא שם מלא: שם פרטי ושם משפחה';
   if(u.length<3)return er.textContent='שם משתמש חייב להכיל 3 תווים לפחות';
   if(users.some(x=>x.u.toLowerCase()===u.toLowerCase()))return er.textContent='שם המשתמש תפוס';
   if(!/^\S+@\S+\.\S+$/.test(em))return er.textContent='כתובת אימייל לא תקינה';
   if(p.length<4)return er.textContent='הסיסמה חייבת להכיל 4 תווים לפחות';
-  users.push({u,p,email:em,role:'customer'});S('ha_users',users);sess=u;S('ha_sess',sess);toast('נרשמת בהצלחה');go('#/shop')}
+  users.push({u,p,email:em,name:val('rn'),role:'customer'});S('ha_users',users);sess=u;S('ha_sess',sess);toast('נרשמת בהצלחה');go('#/shop')}
 function forgot(e){e.preventDefault();
   const x=users.find(x=>x.u===val('fu')&&x.email.toLowerCase()===val('fe').toLowerCase()),p=document.getElementById('fp').value;
   const er=document.getElementById('err');
@@ -136,9 +137,12 @@ function saveRow(id){const q=products.find(x=>x.id===id),n=val('n'+id),pr=+val('
 function adminHtml(){return `<h2>ניהול החנות</h2>
 <div class="panel"><b>הגדרות הזמנות</b><div class="row"><div style="flex:1;min-width:200px"><label>נייד המנהל לקבלת הודעות הזמנה</label><input id="smgr" value="${esc(settings.mgr)}" placeholder="0501234567"></div><div style="flex:1;min-width:200px"><label>קישור תשלום ביט (אופציונלי)</label><input id="sbit" value="${esc(settings.bit)}" placeholder="https://..."></div><button class="btn" onclick="saveSet()">שמירה</button></div></div>
 <form class="panel" onsubmit="addProd(event)"><b>הוספת פריט</b><div class="row"><input id="pn" placeholder="שם הפריט" style="flex:2;min-width:140px"><input id="pp" type="number" min="1" placeholder="מחיר" style="flex:1;min-width:90px"><input id="pd" placeholder="תיאור" style="flex:3;min-width:180px"><input type="file" accept="image/*" multiple onchange="newImg(this)" style="flex:2;min-width:160px"><button class="btn">הוספה</button></div></form>
-<div class="panel scroll"><table><tr><th></th><th>שם</th><th>מחיר ₪</th><th>תיאור</th><th>החלפת תמונות (אפשר כמה)</th><th></th></tr>${products.map(q=>`<tr><td><img src="${esc(q.img)}" alt=""></td><td><input id="n${q.id}" value="${esc(q.name)}"></td><td><input id="p${q.id}" type="number" min="1" value="${q.price}"></td><td><input id="d${q.id}" value="${esc(q.desc||'')}" style="min-width:200px"></td><td><input type="file" accept="image/*" multiple onchange="rowImg(${q.id},this)"></td><td><div class="row"><button class="btn sm" onclick="saveRow(${q.id})">שמירה</button><button class="btn ghost sm" onclick="delProd(${q.id})">מחיקה</button></div></td></tr>`).join('')}</table></div>
+<div class="panel scroll"><table><tr><th></th><th>שם</th><th>מחיר ₪</th><th>תיאור</th><th>החלפת תמונות (אפשר כמה)</th><th></th></tr>${products.map(q=>`<tr><td><img src="${esc(q.img)}" alt=""></td><td><input id="n${q.id}" value="${esc(q.name)}"></td><td><input id="p${q.id}" type="number" min="1" value="${q.price}"></td><td><input id="d${q.id}" value="${esc(q.desc||'')}" style="min-width:200px"></td><td><input type="file" accept="image/*" multiple onchange="rowImg(${q.id},this)"></td><td><div class="row"><button class="btn sm" onclick="saveRow(${q.id})">שמירה</button><button class="btn ghost sm" onclick="delProd(${q.id})">${pendingDel===q.id?'לחצו לאישור מחיקה':'מחיקה'}</button></div></td></tr>`).join('')}</table></div>
 <h2>הזמנות</h2>${orders.length?`<div class="panel scroll"><table><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סה״כ</th></tr>${orders.map(o=>`<tr><td>${esc(o.date)}</td><td>${esc(o.name)}<br>${esc(o.phone)}<br>${esc(o.email)}<br>${esc(o.address)}</td><td>${o.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</td><td>${ils(o.total)}</td></tr>`).join('')}</table></div>`:'<p>אין הזמנות עדיין.</p>'}`}
-function delProd(id){if(!confirm('למחוק את הפריט?'))return;products=products.filter(p=>p.id!==id);S('ha_products',products);render()}
+let pendingDel=null;
+function delProd(id){
+  if(pendingDel!==id){pendingDel=id;render();toast('לחצו שוב כדי לאשר מחיקה');setTimeout(()=>{if(pendingDel===id){pendingDel=null;if(location.hash==='#/admin')render()}},4000);return}
+  pendingDel=null;products=products.filter(p=>p.id!==id);S('ha_products',products);render();toast('הפריט נמחק')}
 
 const pcard=p=>`<div class="card"><a href="#/product/${p.id}"><img src="${esc(p.img)}" alt="${esc(p.name)}"></a><div class="b"><a href="#/product/${p.id}">${esc(p.name)}</a><div class="price">${ils(p.price)}</div><button class="btn sm" onclick="addCart(${p.id})">הוספה לעגלה</button></div></div>`;
 const authBox=(t,f,body,foot)=>`<form class="box" onsubmit="${f}(event)"><h2 style="margin:0">${t}</h2>${body}<p id="err" style="color:#c0392b;min-height:1.4em;margin:10px 0 0"></p><button class="btn" style="width:100%">${t}</button><p style="margin:14px 0 0;font-size:14px">${foot}</p></form>`;
@@ -147,7 +151,7 @@ function nav(){const u=me(),h=location.hash||'#/',a=x=>h===x?' class="on"':'';
   document.getElementById('nav').innerHTML=`<a href="#/"${a('#/')}>בית</a><a href="#/shop"${a('#/shop')}>חנות</a>`+
    (u&&u.role==='admin'?`<a href="#/admin"${a('#/admin')}>ניהול</a>`:'')+
    `<a href="#/cart"${a('#/cart')}>עגלה${cartCount()?`<span class="badge">${cartCount()}</span>`:''}</a>`+
-   (u?`<span style="color:var(--mut)">${esc(u.u)}</span><button class="btn ghost sm" onclick="logout()">התנתקות</button>`:`<a href="#/login"${a('#/login')}>התחברות</a><a class="btn sm" href="#/register">הרשמה</a>`)}
+   (u?`<span style="color:var(--mut)">${esc(u.name||u.u)}</span><button class="btn ghost sm" onclick="logout()">התנתקות</button>`:`<a href="#/login"${a('#/login')}>התחברות</a><a class="btn sm" href="#/register">הרשמה</a>`)}
 
 function render(){
   nav();const h=(location.hash||'#/').slice(1),u=me(),app=document.getElementById('app');let o='';window.scrollTo(0,0);
@@ -164,12 +168,12 @@ function render(){
   else if(h==='/checkout'){
     if(!u)o=`<h2>פרטי משלוח</h2><p>התחברו כדי להזמין.</p><a class="btn" href="#/login">התחברות</a>`;
     else{const {items,tot}=cartInfo();
-      o=items.length?`<h2>פרטי משלוח</h2><form class="box" onsubmit="placeOrder(event)"><label>שם מלא</label><input id="cn" autocomplete="name"><label>טלפון נייד</label><input id="cp" type="tel" placeholder="0501234567" autocomplete="tel"><label>כתובת למשלוח</label><input id="ca" placeholder="רחוב, מספר ועיר" autocomplete="street-address"><p style="font-size:18px"><b>סה״כ: ${ils(tot)}</b></p><p id="err" style="color:#c0392b;min-height:1.4em;margin:0 0 8px"></p><button class="btn" style="width:100%">אישור הזמנה</button></form>`:`<h2>פרטי משלוח</h2><p>העגלה ריקה.</p><a class="btn" href="#/shop">לחנות</a>`}}
+      o=items.length?`<h2>פרטי משלוח</h2><form class="box" onsubmit="placeOrder(event)"><label>שם מלא</label><input id="cn" autocomplete="name" value="${esc(u.name||'')}"><label>טלפון נייד</label><input id="cp" type="tel" placeholder="0501234567" autocomplete="tel"><label>כתובת למשלוח</label><input id="ca" placeholder="רחוב, מספר ועיר" autocomplete="street-address"><p style="font-size:18px"><b>סה״כ: ${ils(tot)}</b></p><p id="err" style="color:#c0392b;min-height:1.4em;margin:0 0 8px"></p><button class="btn" style="width:100%">אישור הזמנה</button></form>`:`<h2>פרטי משלוח</h2><p>העגלה ריקה.</p><a class="btn" href="#/shop">לחנות</a>`}}
   else if(h.startsWith('/done/')){const d=orders.find(x=>x.id==h.split('/')[2]);
     if(!d)o='<h2>ההזמנה לא נמצאה</h2><a class="btn" href="#/">לדף הבית</a>';
     else o=`<h2>תודה ${esc(d.name)}, ההזמנה התקבלה</h2><div class="panel"><p>${d.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</p><p>משלוח אל: ${esc(d.address)}<br>טלפון: ${esc(d.phone)}</p><p style="font-size:22px"><b>לתשלום: ${ils(d.total)}</b></p><div class="row"><button class="btn" onclick="payBit(${d.total})">תשלום בביט</button>${settings.mgr?`<a class="btn ghost" href="${esc(waLink(d))}" target="_blank" rel="noopener">שליחת פרטי ההזמנה לחנות בוואטסאפ</a>`:''}</div><p class="note">לחיצה על "תשלום בביט" מעתיקה את הסכום ופותחת את ביט. הזינו שם את הסכום.</p></div>`}
   else if(h==='/login'){o=authBox('התחברות','login',`<label>שם משתמש</label><input id="lu" autocomplete="username"><label>סיסמה</label><input id="lp" type="password" autocomplete="current-password">`,`<a href="#/forgot" style="text-decoration:underline">שכחתי סיסמה</a> · <a href="#/register" style="text-decoration:underline">אין לי חשבון</a>`)+`<p class="note" style="max-width:420px;margin:auto">משתמשי בדיקה: test1 / test2 / test3, סיסמה: test1234</p>`}
-  else if(h==='/register'){o=authBox('הרשמה','register',`<label>שם משתמש</label><input id="ru" autocomplete="username"><label>אימייל</label><input id="re" type="email"><label>סיסמה</label><input id="rp" type="password" autocomplete="new-password">`,`יש לך חשבון? <a href="#/login" style="text-decoration:underline">להתחברות</a>`)}
+  else if(h==='/register'){o=authBox('הרשמה','register',`<label>שם מלא</label><input id="rn" autocomplete="name"><label>שם משתמש</label><input id="ru" autocomplete="username"><label>אימייל</label><input id="re" type="email"><label>סיסמה</label><input id="rp" type="password" autocomplete="new-password">`,`יש לך חשבון? <a href="#/login" style="text-decoration:underline">להתחברות</a>`)}
   else if(h==='/forgot'){o=authBox('איפוס סיסמה','forgot',`<label>שם משתמש</label><input id="fu"><label>האימייל שנרשם</label><input id="fe" type="email"><label>סיסמה חדשה</label><input id="fp" type="password">`,`<a href="#/login" style="text-decoration:underline">חזרה להתחברות</a>`)}
   else if(h==='/admin'){
     if(!u||u.role!=='admin')o=`<h2>ניהול</h2><p>הדף הזה למנהלים בלבד.</p><a class="btn" href="#/login">התחברות כמנהל</a>`;
