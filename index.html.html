@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hadas Atias</title>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3f8;--fg:#211a27;--card:#fff;--acc:#7a2e5a;--accfg:#fff;--mut:#756d7d;--bd:#e3dce8;--soft:#ece4f0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17121b;--fg:#f0eaf4;--card:#221b29;--acc:#d48ab8;--accfg:#1a0f17;--mut:#a79bb0;--bd:#372d40;--soft:#2c2335}}
+:root[data-theme="dark"]{--bg:#17121b;--fg:#f0eaf4;--card:#221b29;--acc:#d48ab8;--accfg:#1a0f17;--mut:#a79bb0;--bd:#372d40;--soft:#2c2335}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Heebo,Arial,sans-serif;line-height:1.6}
+a{color:inherit;text-decoration:none}
+h1,h2,.logo{font-family:'Frank Ruhl Libre',Georgia,serif}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 5vw;border-bottom:1px solid var(--bd);position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+.logo{font-size:26px;font-weight:800;letter-spacing:.5px;margin-inline-end:auto}
+nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+nav a{padding:4px 2px;border-bottom:2px solid transparent}
+nav a.on{border-color:var(--acc)}
+main{padding:28px 5vw 60px;max-width:1100px;margin:auto}
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(38px,8vw,72px);line-height:1.05;margin:0 0 14px;font-weight:800}
+.hero p{max-width:46ch;color:var(--mut);font-size:18px}
+.btn{display:inline-block;background:var(--acc);color:var(--accfg);border:0;padding:10px 20px;border-radius:999px;font:inherit;font-weight:500;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--bd)}
+.btn.sm{padding:5px 14px;font-size:14px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.card img{width:100%;aspect-ratio:5/6;object-fit:cover;display:block}
+.card .b{padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px}
+.price{color:var(--acc);font-weight:700}
+form.box,.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:24px;max-width:420px;margin:20px auto}
+.panel{max-width:none}
+label{display:block;font-size:14px;color:var(--mut);margin-top:12px}
+input{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg);font:inherit}
+table{width:100%;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid var(--bd);text-align:start;vertical-align:middle}
+.scroll{overflow-x:auto}
+td img{width:48px;height:58px;object-fit:cover;border-radius:8px}
+td input{min-width:90px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{font-size:13px;color:var(--mut);background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:14px}
+.pdp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;margin-top:16px}
+.big{width:100%;border-radius:14px;aspect-ratio:5/6;object-fit:cover;display:block}
+.thumbs{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.thumbs img{width:72px;height:86px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--bd)}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+#toast.on{opacity:1}
+.badge{background:var(--acc);color:var(--accfg);border-radius:999px;padding:0 7px;font-size:12px;margin-inline-start:4px}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#/">Hadas Atias</a>
+  <nav id="nav"></nav>
+</header>
+<main id="app"></main>
+<div id="toast"></div>
+<script>
+const mem={};
+const L=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):(mem[k]??d)}catch(e){return mem[k]??d}};
+const S=(k,v)=>{mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const svg=(e,c)=>'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360"><rect width="300" height="360" fill="${c}"/><text x="150" y="215" font-size="120" text-anchor="middle">${e}</text></svg>`);
+const seedP=[["חולצת פשתן","👚","#e4d7ea",129],["שמלת מקסי","👗","#d8c1d6",289],["ג'ינס גבוה","👖","#c3cfe0",219],["מעיל צמר","🧥","#cfc4d6",459],["חצאית פליסה","👗","#dcd0e6",179],["סווטשירט","👕","#c9d9d2",149],["חולצת סטן","👚","#e8cfdc",169],["כובע קיץ","👒","#e2dccb",89]]
+ .map((p,i)=>({id:i+1,name:p[0],price:p[3],img:svg(p[1],p[2]),imgs:[svg(p[1],p[2]),svg(p[1],'#d9d4df'),svg('🧵',p[2])],desc:p[0]+' מבית Hadas Atias: בד נעים למגע, גזרה נוחה ותפירה איכותית. מתאים ללבישה יומיומית.'}));
+let users=L('ha_users',null);
+if(!users){users=[
+ {u:'admin1234',p:'1234qwer',email:'admin@hadasatias.com',role:'admin'},
+ {u:'test1',p:'test1234',email:'test1@example.com',role:'customer'},
+ {u:'test2',p:'test1234',email:'test2@example.com',role:'customer'},
+ {u:'test3',p:'test1234',email:'test3@example.com',role:'customer'}];S('ha_users',users)}
+let products=L('ha_products',null);if(!products){products=seedP;S('ha_products',products)}
+products.forEach(p=>{if(!p.imgs){const q=seedP.find(x=>x.name===p.name);p.imgs=q?q.imgs:[p.img];p.desc=p.desc||(q?q.desc:'')}});S('ha_products',products);
+let settings=L('ha_set',{mgr:'',bit:''}),orders=L('ha_orders',[]);
+let carts=L('ha_carts',{});
+let sess=L('ha_sess',null);
+const me=()=>users.find(x=>x.u===sess);
+const toast=t=>{const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)};
+const ils=n=>'₪'+Number(n).toLocaleString('he-IL');
+const cartOf=()=>carts[sess]||{};
+const cartCount=()=>Object.values(cartOf()).reduce((a,b)=>a+b,0);
+const val=id=>document.getElementById(id).value.trim();
+const go=h=>{location.hash=h};
+let pendingImgs=[];
+
+function addCart(id){
+  if(!me()){toast('צריך להתחבר כדי להוסיף לעגלה');go('#/login');return}
+  const c=cartOf();c[id]=(c[id]||0)+1;carts[sess]=c;S('ha_carts',carts);toast('נוסף לעגלה');nav()}
+function qty(id,d){const c=cartOf();c[id]=(c[id]||0)+d;if(c[id]<=0)delete c[id];carts[sess]=c;S('ha_carts',carts);render()}
+const cartInfo=()=>{const c=cartOf(),items=Object.keys(c).map(id=>({p:products.find(x=>x.id==id),q:c[id]})).filter(x=>x.p);return{items,tot:items.reduce((a,x)=>a+x.p.price*x.q,0)}};
+const normPhone=s=>{let d=String(s).replace(/\D/g,'');if(d.startsWith('0'))d='972'+d.slice(1);return d};
+const orderMsg=o=>`הזמנה חדשה מ-Hadas Atias\nשם: ${o.name}\nמוצרים: ${o.items.map(i=>i.n+' x'+i.q).join(', ')}\nסה"כ לתשלום: ${ils(o.total)}\nאימייל: ${o.email}\nטלפון: ${o.phone}\nכתובת למשלוח: ${o.address}`;
+const waLink=o=>'https://wa.me/'+normPhone(settings.mgr)+'?text='+encodeURIComponent(orderMsg(o));
+function payBit(t){try{navigator.clipboard.writeText(String(t))}catch(e){}toast('הסכום '+ils(t)+' הועתק. מעבירים לביט');window.open(settings.bit||'https://www.bitpay.co.il','_blank','noopener')}
+function saveSet(){settings={mgr:val('smgr'),bit:val('sbit')};S('ha_set',settings);toast('ההגדרות נשמרו')}
+function placeOrder(e){e.preventDefault();const er=document.getElementById('err'),n=val('cn'),ph=val('cp').replace(/[\s-]/g,''),ad=val('ca');
+  if(n.length<2)return er.textContent='נא למלא שם מלא';
+  if(!/^05\d{8}$/.test(ph))return er.textContent='נא להזין נייד תקין, לדוגמה 0501234567';
+  if(ad.length<8)return er.textContent='נא למלא כתובת מלאה: רחוב, מספר ועיר';
+  const {items,tot}=cartInfo();if(!items.length)return er.textContent='העגלה ריקה';
+  const o={id:Date.now(),date:new Date().toLocaleString('he-IL'),user:sess,name:n,phone:ph,address:ad,email:me().email,items:items.map(x=>({n:x.p.name,q:x.q,pr:x.p.price})),total:tot};
+  orders.unshift(o);S('ha_orders',orders);carts[sess]={};S('ha_carts',carts);go('#/done/'+o.id)}
+function login(e){e.preventDefault();
+  const u=users.find(x=>x.u===val('lu')&&x.p===document.getElementById('lp').value);
+  if(!u){document.getElementById('err').textContent='שם משתמש או סיסמה שגויים';return}
+  sess=u.u;S('ha_sess',sess);toast('שלום '+u.u);go(u.role==='admin'?'#/admin':'#/shop')}
+function logout(){sess=null;S('ha_sess',null);toast('התנתקת');go('#/')}
+function register(e){e.preventDefault();
+  const u=val('ru'),em=val('re'),p=document.getElementById('rp').value,er=document.getElementById('err');
+  if(u.length<3)return er.textContent='שם משתמש חייב להכיל 3 תווים לפחות';
+  if(users.some(x=>x.u.toLowerCase()===u.toLowerCase()))return er.textContent='שם המשתמש תפוס';
+  if(!/^\S+@\S+\.\S+$/.test(em))return er.textContent='כתובת אימייל לא תקינה';
+  if(p.length<4)return er.textContent='הסיסמה חייבת להכיל 4 תווים לפחות';
+  users.push({u,p,email:em,role:'customer'});S('ha_users',users);sess=u;S('ha_sess',sess);toast('נרשמת בהצלחה');go('#/shop')}
+function forgot(e){e.preventDefault();
+  const x=users.find(x=>x.u===val('fu')&&x.email.toLowerCase()===val('fe').toLowerCase()),p=document.getElementById('fp').value;
+  const er=document.getElementById('err');
+  if(!x)return er.textContent='שם המשתמש והאימייל לא תואמים';
+  if(p.length<4)return er.textContent='הסיסמה החדשה חייבת להכיל 4 תווים לפחות';
+  x.p=p;S('ha_users',users);toast('הסיסמה עודכנה, אפשר להתחבר');go('#/login')}
+function resize(file,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const s=Math.min(1,500/i.width),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.8))};i.src=r.result};r.readAsDataURL(file)}
+const rs=f=>new Promise(r=>resize(f,r));
+const rd=inp=>Promise.all([...inp.files].map(rs));
+function newImg(inp){rd(inp).then(a=>{pendingImgs=a;toast(a.length+' תמונות נבחרו')})}
+function rowImg(id,inp){rd(inp).then(a=>{if(!a.length)return;const q=products.find(x=>x.id===id);q.imgs=a;q.img=a[0];S('ha_products',products);render();toast('התמונות עודכנו')})}
+function addProd(e){e.preventDefault();const n=val('pn'),pr=+val('pp');
+  if(!n||!(pr>0))return toast('מלאו שם ומחיר תקינים');
+  const im=pendingImgs.length?pendingImgs:[svg('👗','#e4d7ea')];
+  products.push({id:Date.now(),name:n,price:pr,desc:val('pd'),img:im[0],imgs:im});pendingImgs=[];S('ha_products',products);toast('הפריט נוסף');render()}
+function saveRow(id){const q=products.find(x=>x.id===id),n=val('n'+id),pr=+val('p'+id);
+  if(!n||!(pr>0))return toast('שם או מחיר לא תקינים');q.name=n;q.price=pr;q.desc=val('d'+id);S('ha_products',products);toast('נשמר')}
+function adminHtml(){return `<h2>ניהול החנות</h2>
+<div class="panel"><b>הגדרות הזמנות</b><div class="row"><div style="flex:1;min-width:200px"><label>נייד המנהל לקבלת הודעות הזמנה</label><input id="smgr" value="${esc(settings.mgr)}" placeholder="0501234567"></div><div style="flex:1;min-width:200px"><label>קישור תשלום ביט (אופציונלי)</label><input id="sbit" value="${esc(settings.bit)}" placeholder="https://..."></div><button class="btn" onclick="saveSet()">שמירה</button></div></div>
+<form class="panel" onsubmit="addProd(event)"><b>הוספת פריט</b><div class="row"><input id="pn" placeholder="שם הפריט" style="flex:2;min-width:140px"><input id="pp" type="number" min="1" placeholder="מחיר" style="flex:1;min-width:90px"><input id="pd" placeholder="תיאור" style="flex:3;min-width:180px"><input type="file" accept="image/*" multiple onchange="newImg(this)" style="flex:2;min-width:160px"><button class="btn">הוספה</button></div></form>
+<div class="panel scroll"><table><tr><th></th><th>שם</th><th>מחיר ₪</th><th>תיאור</th><th>החלפת תמונות (אפשר כמה)</th><th></th></tr>${products.map(q=>`<tr><td><img src="${esc(q.img)}" alt=""></td><td><input id="n${q.id}" value="${esc(q.name)}"></td><td><input id="p${q.id}" type="number" min="1" value="${q.price}"></td><td><input id="d${q.id}" value="${esc(q.desc||'')}" style="min-width:200px"></td><td><input type="file" accept="image/*" multiple onchange="rowImg(${q.id},this)"></td><td><div class="row"><button class="btn sm" onclick="saveRow(${q.id})">שמירה</button><button class="btn ghost sm" onclick="delProd(${q.id})">מחיקה</button></div></td></tr>`).join('')}</table></div>
+<h2>הזמנות</h2>${orders.length?`<div class="panel scroll"><table><tr><th>תאריך</th><th>לקוח</th><th>פריטים</th><th>סה״כ</th></tr>${orders.map(o=>`<tr><td>${esc(o.date)}</td><td>${esc(o.name)}<br>${esc(o.phone)}<br>${esc(o.email)}<br>${esc(o.address)}</td><td>${o.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</td><td>${ils(o.total)}</td></tr>`).join('')}</table></div>`:'<p>אין הזמנות עדיין.</p>'}`}
+function delProd(id){if(!confirm('למחוק את הפריט?'))return;products=products.filter(p=>p.id!==id);S('ha_products',products);render()}
+
+const pcard=p=>`<div class="card"><a href="#/product/${p.id}"><img src="${esc(p.img)}" alt="${esc(p.name)}"></a><div class="b"><a href="#/product/${p.id}">${esc(p.name)}</a><div class="price">${ils(p.price)}</div><button class="btn sm" onclick="addCart(${p.id})">הוספה לעגלה</button></div></div>`;
+const authBox=(t,f,body,foot)=>`<form class="box" onsubmit="${f}(event)"><h2 style="margin:0">${t}</h2>${body}<p id="err" style="color:#c0392b;min-height:1.4em;margin:10px 0 0"></p><button class="btn" style="width:100%">${t}</button><p style="margin:14px 0 0;font-size:14px">${foot}</p></form>`;
+
+function nav(){const u=me(),h=location.hash||'#/',a=x=>h===x?' class="on"':'';
+  document.getElementById('nav').innerHTML=`<a href="#/"${a('#/')}>בית</a><a href="#/shop"${a('#/shop')}>חנות</a>`+
+   (u&&u.role==='admin'?`<a href="#/admin"${a('#/admin')}>ניהול</a>`:'')+
+   `<a href="#/cart"${a('#/cart')}>עגלה${cartCount()?`<span class="badge">${cartCount()}</span>`:''}</a>`+
+   (u?`<span style="color:var(--mut)">${esc(u.u)}</span><button class="btn ghost sm" onclick="logout()">התנתקות</button>`:`<a href="#/login"${a('#/login')}>התחברות</a><a class="btn sm" href="#/register">הרשמה</a>`)}
+
+function render(){
+  nav();const h=(location.hash||'#/').slice(1),u=me(),app=document.getElementById('app');let o='';window.scrollTo(0,0);
+  if(h==='/'){o=`<section class="hero"><h1>Hadas Atias</h1><p>בגדים שנוחים ללבוש ויפים להסתכל עליהם. הקולקציה החדשה כבר בחנות.</p><a class="btn" href="#/shop">לחנות</a></section><h2>חדש בחנות</h2><div class="grid">${products.slice(0,4).map(pcard).join('')}</div>`}
+  else if(h==='/shop'){o=`<h2>החנות</h2>${products.length?`<div class="grid">${products.map(pcard).join('')}</div>`:'<p>אין עדיין פריטים בחנות.</p>'}`}
+  else if(h==='/cart'){
+    if(!u)o=`<h2>עגלת קניות</h2><p>התחברו כדי לראות את העגלה.</p><a class="btn" href="#/login">התחברות</a>`;
+    else{const c=cartOf(),items=Object.keys(c).map(id=>({p:products.find(x=>x.id==id),q:c[id]})).filter(x=>x.p),tot=items.reduce((s,x)=>s+x.p.price*x.q,0);
+      o=`<h2>עגלת קניות</h2>`+(items.length?`<div class="panel scroll"><table>${items.map(x=>`<tr><td><img src="${esc(x.p.img)}" alt=""></td><td>${esc(x.p.name)}</td><td><div class="row"><button class="btn ghost sm" onclick="qty(${x.p.id},-1)">−</button>${x.q}<button class="btn ghost sm" onclick="qty(${x.p.id},1)">+</button></div></td><td>${ils(x.p.price*x.q)}</td></tr>`).join('')}</table><p style="font-size:20px"><b>סה״כ: ${ils(tot)}</b></p><button class="btn" onclick="go('#/checkout')">להמשך להזמנה</button></div>`:`<p>העגלה ריקה. <a href="#/shop" style="text-decoration:underline">לחנות</a></p>`)}}
+  else if(h.startsWith('/product/')){const q=products.find(x=>x.id==h.split('/')[2]);
+    if(!q)o='<h2>הפריט לא נמצא</h2><a class="btn" href="#/shop">לחנות</a>';
+    else{const im=q.imgs&&q.imgs.length?q.imgs:[q.img];
+      o=`<a href="#/shop" style="color:var(--mut)">חזרה לחנות</a><div class="pdp"><div><img id="big" class="big" src="${esc(im[0])}" alt="${esc(q.name)}"><div class="thumbs">${im.map(x=>`<img src="${esc(x)}" alt="" onclick="document.getElementById('big').src=this.src">`).join('')}</div></div><div><h1 style="margin:0 0 6px">${esc(q.name)}</h1><div class="price" style="font-size:24px">${ils(q.price)}</div><p style="color:var(--mut);max-width:50ch">${esc(q.desc||'')}</p><button class="btn" onclick="addCart(${q.id})">הוספה לעגלה</button></div></div>`}}
+  else if(h==='/checkout'){
+    if(!u)o=`<h2>פרטי משלוח</h2><p>התחברו כדי להזמין.</p><a class="btn" href="#/login">התחברות</a>`;
+    else{const {items,tot}=cartInfo();
+      o=items.length?`<h2>פרטי משלוח</h2><form class="box" onsubmit="placeOrder(event)"><label>שם מלא</label><input id="cn" autocomplete="name"><label>טלפון נייד</label><input id="cp" type="tel" placeholder="0501234567" autocomplete="tel"><label>כתובת למשלוח</label><input id="ca" placeholder="רחוב, מספר ועיר" autocomplete="street-address"><p style="font-size:18px"><b>סה״כ: ${ils(tot)}</b></p><p id="err" style="color:#c0392b;min-height:1.4em;margin:0 0 8px"></p><button class="btn" style="width:100%">אישור הזמנה</button></form>`:`<h2>פרטי משלוח</h2><p>העגלה ריקה.</p><a class="btn" href="#/shop">לחנות</a>`}}
+  else if(h.startsWith('/done/')){const d=orders.find(x=>x.id==h.split('/')[2]);
+    if(!d)o='<h2>ההזמנה לא נמצאה</h2><a class="btn" href="#/">לדף הבית</a>';
+    else o=`<h2>תודה ${esc(d.name)}, ההזמנה התקבלה</h2><div class="panel"><p>${d.items.map(i=>esc(i.n)+' ×'+i.q).join('<br>')}</p><p>משלוח אל: ${esc(d.address)}<br>טלפון: ${esc(d.phone)}</p><p style="font-size:22px"><b>לתשלום: ${ils(d.total)}</b></p><div class="row"><button class="btn" onclick="payBit(${d.total})">תשלום בביט</button>${settings.mgr?`<a class="btn ghost" href="${esc(waLink(d))}" target="_blank" rel="noopener">שליחת פרטי ההזמנה לחנות בוואטסאפ</a>`:''}</div><p class="note">לחיצה על "תשלום בביט" מעתיקה את הסכום ופותחת את ביט. הזינו שם את הסכום.</p></div>`}
+  else if(h==='/login'){o=authBox('התחברות','login',`<label>שם משתמש</label><input id="lu" autocomplete="username"><label>סיסמה</label><input id="lp" type="password" autocomplete="current-password">`,`<a href="#/forgot" style="text-decoration:underline">שכחתי סיסמה</a> · <a href="#/register" style="text-decoration:underline">אין לי חשבון</a>`)+`<p class="note" style="max-width:420px;margin:auto">משתמשי בדיקה: test1 / test2 / test3, סיסמה: test1234</p>`}
+  else if(h==='/register'){o=authBox('הרשמה','register',`<label>שם משתמש</label><input id="ru" autocomplete="username"><label>אימייל</label><input id="re" type="email"><label>סיסמה</label><input id="rp" type="password" autocomplete="new-password">`,`יש לך חשבון? <a href="#/login" style="text-decoration:underline">להתחברות</a>`)}
+  else if(h==='/forgot'){o=authBox('איפוס סיסמה','forgot',`<label>שם משתמש</label><input id="fu"><label>האימייל שנרשם</label><input id="fe" type="email"><label>סיסמה חדשה</label><input id="fp" type="password">`,`<a href="#/login" style="text-decoration:underline">חזרה להתחברות</a>`)}
+  else if(h==='/admin'){
+    if(!u||u.role!=='admin')o=`<h2>ניהול</h2><p>הדף הזה למנהלים בלבד.</p><a class="btn" href="#/login">התחברות כמנהל</a>`;
+    else o=adminHtml()}
+  else o='<h2>העמוד לא נמצא</h2><a class="btn" href="#/">לדף הבית</a>';
+  app.innerHTML=o}
+window.addEventListener('hashchange',render);render();
+</script>
+</body>
+</html>
